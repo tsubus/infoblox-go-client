@@ -392,7 +392,7 @@ var _ = Describe("Objects", func() {
 				"Location": "east coast",
 			}
 
-			ra := NewRecordA(view, zone, name, ipv4addr, ttl, useTTL, comment, eas, "")
+			ra := NewRecordA(view, zone, name, ipv4addr, IPV4Addr{}, ttl, useTTL, comment, eas, "")
 
 			It("should set fields correctly", func() {
 				Expect(*ra.Ipv4Addr).To(Equal(ipv4addr))

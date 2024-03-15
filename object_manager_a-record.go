@@ -7,12 +7,38 @@ import (
 	"strings"
 )
 
+type IPV4Addr struct {
+	ObjectFunction   string            `json:"_object_function"`
+	Parameters       *Parameters       `json:"_parameters,omitempty"`
+	ResultField      string            `json:"_result_field"`
+	Object           *ObjectType       `json:"_object,omitempty"`
+	ObjectParameters *ObjectParameters `json:"_object_parameters,omitempty"`
+}
+
+type Parameters struct {
+	Exclude *[]string `json:"exclude,omitempty"`
+	Num     *int      `json:"num,omitempty"`
+}
+
+type ObjectParameters struct {
+	Network     *string `json:"network,omitempty"`
+	NetworkView *string `json:"network_view,omitempty"`
+}
+
+type ObjectType string
+
+const (
+	NetworkObject ObjectType = "network"
+	RangeObject   ObjectType = "range"
+)
+
 func (objMgr *ObjectManager) CreateARecord(
 	netView string,
 	dnsView string,
 	name string,
 	cidr string,
 	ipAddr string,
+	ipAddrStruct IPV4Addr,
 	ttl uint32,
 	useTTL bool,
 	comment string,
@@ -24,9 +50,11 @@ func (objMgr *ObjectManager) CreateARecord(
 			"'name' argument is expected to be non-empty and it must NOT contain leading/trailing spaces")
 	}
 
-	recordA := NewRecordA(dnsView, "", name, "", ttl, useTTL, comment, eas, "")
+	recordA := NewRecordA(dnsView, "", name, "", IPV4Addr{}, ttl, useTTL, comment, eas, "")
 
-	if ipAddr == "" {
+	if ipAddrStruct != (IPV4Addr{}) {
+		recordA.Ipv4AddrStruct = &ipAddrStruct
+	} else if ipAddr == "" {
 		if cidr == "" {
 			return nil, fmt.Errorf("CIDR must not be empty")
 		}
@@ -115,7 +143,7 @@ func (objMgr *ObjectManager) UpdateARecord(
 		newIpAddr = &ipAddr
 	}
 	rec = NewRecordA(
-		"", "", name, *newIpAddr, ttl, useTTL, comment, eas, ref)
+		"", "", name, *newIpAddr, IPV4Addr{}, ttl, useTTL, comment, eas, ref)
 	ref, err = objMgr.connector.UpdateObject(rec, ref)
 	if err != nil {
 		return nil, err

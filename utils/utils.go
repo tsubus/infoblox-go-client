@@ -14,3 +14,8 @@ func StringPtr(v string) *string {
 func Uint32Ptr(v uint32) *uint32 {
 	return &v
 }
+
+// Ptr returns a pointer to the value passed as argument
+func Ptr[V []string | string | bool | uint32 | int](v V) *V {
+	return &v
+}

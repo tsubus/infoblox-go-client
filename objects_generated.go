@@ -14969,6 +14969,9 @@ type RecordA struct {
 	// The IPv4 Address of the record.
 	Ipv4Addr *string `json:"ipv4addr,omitempty"`
 
+	// The IPv4 Address of the record.
+	Ipv4AddrStruct *IPV4Addr `json:"ipv4addr,omitempty"`
+
 	// The time of the last DNS query in Epoch seconds format.
 	LastQueried *UnixTime `json:"last_queried,omitempty"`
 
@@ -15029,6 +15032,7 @@ func NewRecordA(
 	zone string,
 	name string,
 	ipAddr string,
+	ipAddrStruct IPV4Addr,
 	ttl uint32,
 	useTTL bool,
 	comment string,
@@ -15040,6 +15044,7 @@ func NewRecordA(
 	res.Zone = zone
 	res.Name = &name
 	res.Ipv4Addr = &ipAddr
+	res.Ipv4AddrStruct = &ipAddrStruct
 	res.Ttl = &ttl
 	res.UseTtl = &useTTL
 	res.Comment = &comment

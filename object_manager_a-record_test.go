@@ -2,6 +2,7 @@ package ibclient
 
 import (
 	"fmt"
+	"github.com/infobloxopen/infoblox-go-client/v2/utils"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,9 +30,9 @@ var _ = Describe("Object Manager: A-record", func() {
 		eas["VM ID"] = vmID
 		eas["VM Name"] = vmName
 		objectForCreation := NewRecordA(
-			dnsView, "", recordName, ipAddr, 5, true, comment, eas, "")
+			dnsView, "", recordName, ipAddr, IPV4Addr{}, 5, true, comment, eas, "")
 		objectAsResult := NewRecordA(
-			dnsView, zone, recordName, ipAddr, 5, true, comment, eas, fakeRefReturn)
+			dnsView, zone, recordName, ipAddr, IPV4Addr{}, 5, true, comment, eas, fakeRefReturn)
 
 		aniFakeConnector := &fakeConnector{
 			createObjectObj:      objectForCreation,
@@ -46,7 +47,7 @@ var _ = Describe("Object Manager: A-record", func() {
 		var actualRecord *RecordA
 		var err error
 		It("should pass expected A record Object to CreateObject", func() {
-			actualRecord, err = objMgr.CreateARecord(netviewName, dnsView, recordName, cidr, ipAddr, 5, true, comment, eas)
+			actualRecord, err = objMgr.CreateARecord(netviewName, dnsView, recordName, cidr, ipAddr, IPV4Addr{}, 5, true, comment, eas)
 		})
 		It("should return expected A record Object", func() {
 			Expect(err).To(BeNil())
@@ -73,7 +74,7 @@ var _ = Describe("Object Manager: A-record", func() {
 			getObjectRef:         "",
 			getObjectObj:         NewEmptyRecordA(),
 			getObjectQueryParams: queryParams,
-			resultObject:         []RecordA{*NewRecordA(dnsView, "", recordName, ipAddr, 0, false, "", nil, fakeRefReturn)},
+			resultObject:         []RecordA{*NewRecordA(dnsView, "", recordName, ipAddr, IPV4Addr{}, 0, false, "", nil, fakeRefReturn)},
 			fakeRefReturn:        fakeRefReturn,
 		}
 
@@ -145,12 +146,12 @@ var _ = Describe("Object Manager: A-record", func() {
 
 		aniFakeConnector := &fakeConnector{
 			createObjectObj: NewRecordA(
-				dnsView, "", recordName, ipAddrFunc, 0, false, "", nil, ""),
+				dnsView, "", recordName, ipAddrFunc, IPV4Addr{}, 0, false, "", nil, ""),
 			getObjectRef:         fakeRefReturn,
 			getObjectObj:         NewEmptyRecordA(),
 			getObjectQueryParams: NewQueryParams(false, nil),
 			resultObject: NewRecordA(
-				dnsView, "", recordName, ipAddrRes, 0, false, "", nil, fakeRefReturn),
+				dnsView, "", recordName, ipAddrRes, IPV4Addr{}, 0, false, "", nil, fakeRefReturn),
 			fakeRefReturn: fakeRefReturn,
 		}
 
@@ -168,7 +169,7 @@ var _ = Describe("Object Manager: A-record", func() {
 		var actualRecord *RecordA
 		var err error
 		It("should pass expected A record Object to CreateObject", func() {
-			actualRecord, err = objMgr.CreateARecord(netviewName, dnsView, recordName, cidr, ipAddrReq, 0, false, "", ea)
+			actualRecord, err = objMgr.CreateARecord(netviewName, dnsView, recordName, cidr, ipAddrReq, IPV4Addr{}, 0, false, "", ea)
 		})
 		It("should return expected A record Object", func() {
 			Expect(err).To(BeNil())
@@ -380,7 +381,7 @@ var _ = Describe("Object Manager: A-record", func() {
 				"ea4": "ea4_value",
 				"ea5": "ea5_old_value"}
 			initComment := "initial comment"
-			initObj := NewRecordA(dnsView, dnsZone, dnsName, initIPAddr, initTTL, initUseTTL, initComment, initialEas, initRef)
+			initObj := NewRecordA(dnsView, dnsZone, dnsName, initIPAddr, IPV4Addr{}, initTTL, initUseTTL, initComment, initialEas, initRef)
 
 			getObjIn := NewEmptyRecordA()
 
@@ -391,7 +392,7 @@ var _ = Describe("Object Manager: A-record", func() {
 				"ea5": "ea5_old_value"}
 
 			newComment := "test comment 1"
-			updateObjIn := NewRecordA("", "", dnsName, newIPAddr, newTTL, newUseTTL, newComment, newEas, initRef)
+			updateObjIn := NewRecordA("", "", dnsName, newIPAddr, IPV4Addr{}, newTTL, newUseTTL, newComment, newEas, initRef)
 
 			conn = &fakeConnector{
 				getObjectObj:         getObjIn,
@@ -433,6 +434,69 @@ var _ = Describe("Object Manager: A-record", func() {
 		It("should return expected A record Ref", func() {
 			Expect(actualRef).To(Equal(fakeRefReturn))
 			Expect(err).To(BeNil())
+		})
+	})
+
+	Describe("Create an A-record by using struct", func() {
+		cmpType := "Docker"
+		tenantID := "01234567890abcdef01234567890abcdef"
+		netviewName := "private"
+		cidr := ""
+		ipAddrReq := ""
+		ipAddrRes := "53.0.0.3"
+		objectType := NetworkObject
+		ipAddrStruct := IPV4Addr{
+			ObjectFunction: "next_available_ip",
+			Parameters: &Parameters{
+				Exclude: utils.Ptr([]string{"53.0.0.1", "53.0.0.2"}),
+				Num:     utils.Ptr(1),
+			},
+			ResultField: "ips",
+			Object:      &objectType,
+			ObjectParameters: &ObjectParameters{
+				Network: utils.Ptr("53.0.0.1/24"),
+			},
+		}
+		vmID := "93f9249abc039284"
+		vmName := "dummyvm"
+		dnsView := "default"
+		recordName := "test"
+		fakeRefReturn := fmt.Sprintf(
+			"record:a/ZG5zLmJpbmRfY25h:%s/%s/%s",
+			recordName,
+			ipAddrRes,
+			netviewName)
+
+		aniFakeConnector := &fakeConnector{
+			createObjectObj: NewRecordA(
+				dnsView, "", recordName, "", ipAddrStruct, 0, false, "", nil, ""),
+			getObjectRef:         fakeRefReturn,
+			getObjectObj:         NewEmptyRecordA(),
+			getObjectQueryParams: NewQueryParams(false, nil),
+			resultObject: NewRecordA(
+				dnsView, "", recordName, ipAddrRes, ipAddrStruct, 0, false, "", nil, fakeRefReturn),
+			fakeRefReturn: fakeRefReturn,
+		}
+
+		objMgr := NewObjectManager(aniFakeConnector, cmpType, tenantID)
+
+		ea := make(EA)
+		aniFakeConnector.createObjectObj.(*RecordA).Ea = ea
+		aniFakeConnector.createObjectObj.(*RecordA).Ea["VM ID"] = vmID
+		aniFakeConnector.createObjectObj.(*RecordA).Ea["VM Name"] = vmName
+
+		aniFakeConnector.resultObject.(*RecordA).Ea = ea
+		aniFakeConnector.resultObject.(*RecordA).Ea["VM ID"] = vmID
+		aniFakeConnector.resultObject.(*RecordA).Ea["VM Name"] = vmName
+
+		var actualRecord *RecordA
+		var err error
+		It("should pass expected A record Object to CreateObject", func() {
+			actualRecord, err = objMgr.CreateARecord(netviewName, dnsView, recordName, cidr, ipAddrReq, ipAddrStruct, 0, false, "", ea)
+		})
+		It("should return expected A record Object", func() {
+			Expect(err).To(BeNil())
+			Expect(actualRecord).To(Equal(aniFakeConnector.resultObject))
 		})
 	})
 })
